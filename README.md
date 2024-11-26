@@ -23,6 +23,4 @@ Abra-o no [aplicativo Expo](https://expo.io) no seu telefone para visualizá-lo.
 
 #### `npm run ios`
 
-Como `npm start` / `yarn start`, mas também tenta abrir seu aplicativo no simulador iOS se você estiver em um Mac e o tiver instalado.
-
 #### `npm run android`
