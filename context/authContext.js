@@ -1,93 +1,131 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import {onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut} from 'firebase/auth';
+import {
+  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut
+} from "firebase/auth";
 import { auth, db } from "../firebaseConfig";
-import {doc, getDoc, setDoc} from 'firebase/firestore'
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import AsyncStorage from "@react-native-async-storage/async-storage";  // Import AsyncStorage
 
+// Criação do contexto de autenticação
 export const AuthContext = createContext();
 
-export const AuthContextProvider = ({children})=>{
-    const [user, setUser] = useState(null);
-    const [isAuthenticated, setIsAuthenticated] = useState(undefined);
+export const AuthContextProvider = ({ children }) => {
+  const [user, setUser] = useState(null); // Estado para o usuário autenticado
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // Estado de autenticação
+  const [loading, setLoading] = useState(true); // Estado de carregamento
 
+  // Verifica mudanças no estado de autenticação
+  useEffect(() => {
+    // Limpar AsyncStorage sempre que o app iniciar
+    AsyncStorage.clear();
 
-    useEffect(()=>{
-        const unsub = onAuthStateChanged(auth, (user)=>{
-            // console.log('got user: ', user);
-            if(user){
-                setIsAuthenticated(true);
-                setUser(user);
-                updateUserData(user.uid);
-            }else{
-                setIsAuthenticated(false);
-                setUser(null);
-            }
-        });
-        return unsub;
-    },[]);
+    const unsub = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        updateUserData(currentUser.uid);
+        setIsAuthenticated(true);
+        setUser(currentUser);
+      } else {
+        setIsAuthenticated(false);
+        setUser(null);
+      }
+      setLoading(false); // Carregamento concluído
+    });
 
-    const updateUserData = async (userId)=>{
-        const docRef = doc(db, 'users', userId);
-        const docSnap = await getDoc(docRef);
+    return () => unsub(); // Remove o observador ao desmontar
+  }, []);
 
-        if(docSnap.exists()){
-            let data = docSnap.data();
-            setUser({...user, username: data.username, profileUrl: data.profileUrl, userId: data.userId})
-        }
+  // Atualiza os dados do usuário com informações do Firestore
+  const updateUserData = async (userId) => {
+    try {
+      const docRef = doc(db, "users", userId);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setUser((prevUser) => ({
+          ...prevUser,
+          username: data.username,
+          profileUrl: data.profileUrl,
+          userId: data.userId
+        }));
+      }
+    } catch (error) {
+      console.error("Erro ao buscar dados do usuário no Firestore:", error);
     }
+  };
 
-    const login = async (email, password)=>{
-        try{
-            const response = await signInWithEmailAndPassword(auth, email, password);
-            return {success: true};
-        }catch(e){
-            let msg = e.message;
-            if(msg.includes('(auth/invalid-email)')) msg='E-mail inválido'
-            if(msg.includes('(auth/invalid-credential)')) msg='E-mail ou Senha errada'
-            return {success: false, msg};
-        }
+  // Função de login
+  const login = async (email, password) => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      // Limpar o AsyncStorage após login bem-sucedido
+      await AsyncStorage.clear();
+      return { success: true };
+    } catch (error) {
+      const msg = parseFirebaseError(error);
+      return { success: false, msg };
     }
-    const logout = async ()=>{
-        try{
-            await signOut(auth);
-            return {success: true}
-        }catch(e){
-            return {success: false, msg: e.message, error: e};
-        }
+  };
+
+  // Função de logout
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      // Limpar o AsyncStorage após logout
+      await AsyncStorage.clear();
+      return { success: true };
+    } catch (error) {
+      return { success: false, msg: error.message, error };
     }
-    const register = async (email, password, username, profileUrl)=>{
-        try{
-            const response = await createUserWithEmailAndPassword(auth, email, password);
-            console.log('response.user :', response?.user);
+  };
 
-            // setUser(response?.user);
-            // setIsAuthenticated(true);
+  // Função de registro
+  const register = async (email, password, username, profileUrl) => {
+    try {
+      const response = await createUserWithEmailAndPassword(auth, email, password);
+      const { user: newUser } = response;
 
-            await setDoc(doc(db, "users", response?.user?.uid),{
-                username, 
-                profileUrl,
-                userId: response?.user?.uid
-            });
-            return {success: true, data: response?.user};
-        }catch(e){
-            let msg = e.message;
-            if(msg.includes('(auth/invalid-email)')) msg='E-mail inválido'
-            if(msg.includes('(auth/email-already-in-use)')) msg='Esse e-mail já está em uso'
-            return {success: false, msg};
-        }
+      await setDoc(doc(db, "users", newUser.uid), {
+        username,
+        profileUrl,
+        userId: newUser.uid
+      });
+
+      return { success: true, data: newUser };
+    } catch (error) {
+      const msg = parseFirebaseError(error);
+      return { success: false, msg };
     }
+  };
 
-    return (
-        <AuthContext.Provider value={{user, isAuthenticated, login, register, logout}}>
-            {children}
-        </AuthContext.Provider>
-    )
-}
+  // Função utilitária para interpretar erros do Firebase
+  const parseFirebaseError = (error) => {
+    let msg = error.message;
+    if (msg.includes("(auth/invalid-email)")) msg = "E-mail inválido";
+    if (msg.includes("(auth/email-already-in-use)")) msg = "Esse e-mail já está em uso";
+    if (msg.includes("(auth/wrong-password)")) msg = "Senha incorreta";
+    if (msg.includes("(auth/user-not-found)")) msg = "Usuário não encontrado";
+    return msg;
+  };
 
-export const useAuth = ()=>{
-    const value = useContext(AuthContext);
+  // Provedor do contexto
+  return (
+    <AuthContext.Provider value={{ user, isAuthenticated, loading, login, register, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
 
-    if(!value){
-        throw new Error('useAuth must be wrapped inside AuthContextProvider');
-    }
-    return value;
-}
+// Hook customizado para acessar o contexto de autenticação
+export const useAuth = () => {
+  const value = useContext(AuthContext);
+
+  if (!value) {
+    throw new Error("useAuth must be wrapped inside AuthContextProvider");
+  }
+
+  return value;
+};

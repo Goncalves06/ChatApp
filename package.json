@@ -1,0 +1,36 @@
+{
+  "name": "chat",
+  "version": "1.0.0",
+  "description": "instale dependências dev",
+  "main": "expo-router/entry",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "expo start"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "^1.23.1",
+    "expo": "^52.0.17",
+    "expo-image": "^2.0.3",
+    "expo-image-picker": "~16.0.3",
+    "expo-router": "^4.0.11",
+    "expo-status-bar": "^2.0.0",
+    "firebase": "^11.0.2",
+    "lottie-react-native": "^7.1.0",
+    "nativewind": "^4.1.23",
+    "react": "18.3.1",
+    "react-native": "0.76.3",
+    "react-native-popup-menu": "^0.16.1",
+    "react-native-reanimated": "^3.16.3",
+    "react-native-responsive-screen": "^1.4.2",
+    "tailwindcss": "^3.4.16"
+  },
+  "devDependencies": {
+    "@types/react": "~18.3.12",
+    "@types/react-native": "^0.72.8",
+    "babel-preset-expo": "^12.0.3",
+    "typescript": "^5.3.3"
+  }
+}
