@@ -115,7 +115,6 @@ export default function ChatRoom() {
                 userId: user?.userId,
                 text: text || '',
                 imageUrl,
-                profileUrl: user?.profileUrl,
                 senderName: user?.username,
                 createdAt: Timestamp.fromDate(new Date())
             });

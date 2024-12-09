@@ -17,8 +17,7 @@ export default function SignUp() {
     const [formData, setFormData] = useState({
         email: '',
         password: '',
-        username: '',
-        profile: ''
+        username: ''
     });
 
     // Função para atualizar o estado do formulário
@@ -31,7 +30,7 @@ export default function SignUp() {
 
     // Validação de campos
     const validateForm = () => {
-        if (!formData.email || !formData.password || !formData.username || !formData.profile) {
+        if (!formData.email || !formData.password || !formData.username ) {
             Alert.alert('Sign Up', "Por favor, preencha todos os campos");
             return false;
         }
@@ -60,8 +59,7 @@ export default function SignUp() {
             const response = await register(
                 formData.email,
                 formData.password,
-                formData.username,
-                formData.profile
+                formData.username
             );
 
             if (!response.success) {
@@ -125,11 +123,6 @@ export default function SignUp() {
                             'Senha',
                             'password',
                             true
-                        )}
-                        {renderInput(
-                            <Feather name="image" size={hp(2.7)} color="gray" />,
-                            'Imagem de perfil',
-                            'profile'
                         )}
 
                         <View>
