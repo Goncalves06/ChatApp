@@ -1,14 +1,10 @@
 import { initializeApp } from "firebase/app";
-
-import {getReactNativePersistence, initializeAuth} from 'firebase/auth';
+import { getAuth, getReactNativePersistence } from "firebase/auth"; // Usando o getAuth para autenticação
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {getFirestore, collection} from 'firebase/firestore'
+import { getFirestore, collection } from "firebase/firestore";
+import { getStorage } from "firebase/storage"; // Para o Firebase Storage
 
-
-// 1. Crie um novo projeto no Firebase Console
-// 2. Habilite o e-mail e senha auth provider na página de authentication
-// 3. Crie um web app e copie o firebseConfigs abaixo 
-
+// Configuração do Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAsbJDuFDSFYROQJY2Kazbek-yxUmaQ2YQ",
   authDomain: "chat-616e6.firebaseapp.com",
@@ -18,15 +14,15 @@ const firebaseConfig = {
   appId: "1:59053790397:web:36b1a523e090420b1a93d4"
 };
 
-// Initialize Firebase
+// Inicialize o Firebase
 const app = initializeApp(firebaseConfig);
 
-export const auth = initializeAuth(app, {
-    persistence: getReactNativePersistence(AsyncStorage)
-});
+// Inicializando o Firebase Auth com persistência
+export const auth = getAuth(app);
 
+export const storage = getStorage(app); // Inicializando o Storage
 export const db = getFirestore(app);
 
-export const usersRef = collection(db, 'users');
-export const roomRef = collection(db, 'rooms');
-
+// Referências para usuários e salas
+export const usersRef = collection(db, "users");
+export const roomRef = collection(db, "rooms");
