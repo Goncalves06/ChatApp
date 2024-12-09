@@ -1,15 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, TextInput, TouchableOpacity, Alert, Keyboard } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, Keyboard } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import ChatRoomHeader from '../../components/ChatRoomHeader';
 import MessageList from '../../components/MessageList';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
-import { Feather, MaterialIcons } from '@expo/vector-icons';
+import { Feather, MaterialIcons } from 'react-native-vector-icons';
 import CustomKeyboardView from '../../components/CustomKeyboardView';
 import { useAuth } from '../../context/authContext';
 import { getRoomId } from '../../utils/common';
-import { Timestamp, addDoc, collection, doc, onSnapshot, orderBy, query, setDoc } from 'firebase/firestore';
+import { Timestamp, addDoc, collection, doc, onSnapshot, orderBy, query, setDoc, getDocs } from 'firebase/firestore';
 import { db, storage } from '../../firebaseConfig';
 import { launchCameraAsync, launchImageLibraryAsync, MediaTypeOptions } from 'expo-image-picker';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -19,9 +19,11 @@ export default function ChatRoom() {
     const { user } = useAuth();
     const router = useRouter();
     const [messages, setMessages] = useState([]);
+    const [isOtherTyping, setIsOtherTyping] = useState(false);
     const textRef = useRef('');
     const inputRef = useRef(null);
     const scrollViewRef = useRef(null);
+    const typingTimeout = useRef(null); // Temporizador para digitação
 
     useEffect(() => {
         createRoomIfNotExists();
@@ -31,9 +33,17 @@ export default function ChatRoom() {
         const messagesRef = collection(docRef, "messages");
         const q = query(messagesRef, orderBy('createdAt', 'asc'));
 
-        const unsub = onSnapshot(q, (snapshot) => {
+        const unsubMessages = onSnapshot(q, (snapshot) => {
             const allMessages = snapshot.docs.map(doc => doc.data());
             setMessages([...allMessages]);
+        });
+
+        // Monitorar estado de digitação do outro usuário
+        const typingRef = doc(db, 'rooms', roomId, 'typing', item?.userId);
+        const unsubTyping = onSnapshot(typingRef, (docSnapshot) => {
+            if (docSnapshot.exists()) {
+                setIsOtherTyping(docSnapshot.data().isTyping);
+            }
         });
 
         const KeyboardDidShowListener = Keyboard.addListener(
@@ -42,7 +52,8 @@ export default function ChatRoom() {
         );
 
         return () => {
-            unsub();
+            unsubMessages();
+            unsubTyping();
             KeyboardDidShowListener.remove();
         };
     }, []);
@@ -65,9 +76,29 @@ export default function ChatRoom() {
         });
     };
 
+    const handleTyping = () => {
+        const roomId = getRoomId(user?.userId, item?.userId);
+
+        // Atualiza o estado para "digitando"
+        setDoc(doc(db, 'rooms', roomId, 'typing', user?.userId), {
+            isTyping: true
+        });
+
+        // Reseta o temporizador ao digitar novamente
+        if (typingTimeout.current) {
+            clearTimeout(typingTimeout.current);
+        }
+
+        // Após 2 segundos sem digitar, atualiza para "não digitando"
+        typingTimeout.current = setTimeout(() => {
+            setDoc(doc(db, 'rooms', roomId, 'typing', user?.userId), {
+                isTyping: false
+            });
+        }, 2000); // 2 segundos
+    };
+
     const hanldeSendMessage = async (text, imageUrl = null) => {
         if (!text.trim() && !imageUrl) {
-            // Se o texto estiver vazio e não houver imagem, não envia a mensagem
             Alert.alert('Erro', 'A mensagem não pode estar vazia.');
             return;
         }
@@ -77,7 +108,6 @@ export default function ChatRoom() {
             const docRef = doc(db, 'rooms', roomId);
             const messagesRef = collection(docRef, "messages");
 
-            // Limpa o campo de texto
             textRef.current = '';
             if (inputRef) inputRef?.current?.clear();
 
@@ -124,11 +154,17 @@ export default function ChatRoom() {
                     <View className="flex-1">
                         <MessageList scrollViewRef={scrollViewRef} messages={messages} currentUser={user} />
                     </View>
+                    {isOtherTyping && (
+                        <Text style={{ padding: 10, color: 'gray', textAlign: 'center' }}>...Digitando</Text>
+                    )}
                     <View style={{ marginBottom: hp(2.7) }} className="pt-2">
                         <View className="flex-row mx-3 justify-between bg-white border p-2 border-neutral-300 rounded-full pl-5">
                             <TextInput
                                 ref={inputRef}
-                                onChangeText={value => textRef.current = value}
+                                onChangeText={value => {
+                                    textRef.current = value;
+                                    handleTyping();
+                                }}
                                 placeholder='Type message...'
                                 placeholderTextColor={'gray'}
                                 style={{ fontSize: hp(2) }}
