@@ -24,11 +24,12 @@ Configuração Firebase:
 - Execute: npm start
 - Em um aparelho movél com o software "Expo Go" instalado, escaneie o QR Code fornecido no terminal.
 
--- LINK PARA DOWLOAND DO APK --
-https://expo.dev/artifacts/eas/wrV3fZBxA9pyAWf4setM96.apk
 OBSERVAÇÕES IMPORTANTES
 
 - Os chats disponiveis só aparecerão na home screen quando tiverem 2 ou mais usuarios cadastrados.
+
+-- LINK PARA DOWLOAND DO APK --
+https://expo.dev/artifacts/eas/wrV3fZBxA9pyAWf4setM96.apk
 
 
 
