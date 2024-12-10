@@ -1,5 +1,4 @@
-ChatApp - Aplicativo de Chat com Autenticação:
-Aplicativo móvel de chat desenvolvido com React Native e Firebase.
+ChatApp - Aplicativo móvel de chat desenvolvido com React Native e Firebase.
 
 Funcionalidades:
 - Autenticação de Usuários: Autenticação via e-mail e senha utilizando o Firebase Authentication.
