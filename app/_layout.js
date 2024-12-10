@@ -10,6 +10,11 @@ import "../global.css";
 import { AuthContextProvider, useAuth } from '../context/authContext';
 // Importa MenuProvider para fornecer suporte a menus pop-up em todo o aplicativo
 import { MenuProvider } from 'react-native-popup-menu';
+// Importa enableScreens para otimizar a navegação
+import { enableScreens } from 'react-native-screens';
+
+// Chama a função enableScreens para otimizar a navegação e melhorar a performance
+enableScreens();
 
 // Componente principal que gerencia a navegação e autenticação do usuário
 const MainLayout = () => {
