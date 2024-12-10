@@ -8,7 +8,7 @@ Funcionalidades:
 
 ------------------------------------------------------------------------------------------------------------------------
 
-* Passo a passo para instalação e configuração do projeto: *
+Passo a passo para instalação e configuração do projeto:
 
 - Instalar dependências (execute: npm install).
 - Acesse https://console.firebase.google.com para criar um novo projeto.
@@ -25,7 +25,7 @@ Configuração Firebase:
 - Execute: npm start
 - Em um aparelho movél com o software "Expo Go" instalado, escaneie o QR Code fornecido no terminal.
 
-* OBSERVAÇÕES IMPORTANTES *
+OBSERVAÇÕES IMPORTANTES
 
 - Os chats disponiveis só aparecerão na home screen quando tiverem 2 ou mais usuarios cadastrados.
 
